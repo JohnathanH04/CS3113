@@ -9,4 +9,4 @@ enum AppStatus { TERMINATED, RUNNING };
 
 Color ColorFromHex(const char *hex);
 
-#endif // CS3113_H
+#endif // start_H
