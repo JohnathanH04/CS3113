@@ -11,9 +11,7 @@ constexpr int SCREEN_WIDTH        = 1000 * 1.5f,
 constexpr float RADIUS          = 100.0f, // radius of the orbit
                 ORBIT_SPEED     = 0.05f,  // the speed at which the triangle will travel its orbit
                 MAX_AMPLITUDE   = 10.0f,  // by how much the triangle will be expanding/contracting
-                PULSE_SPEED     = 100.0f, // how fast the triangle is going to be "pulsing"
-                PULSE_INCREMENT = 10.0f;  // the current value we're scaling by
-
+                PULSE_SPEED     = 100.0f; // how fast the triangle is going to be "pulsing"
 constexpr char    BG_COLOUR[] = "#000000";
 constexpr Vector2 BASE_SIZE   = { (float) SIZE, (float) SIZE };
 
@@ -29,6 +27,7 @@ AppStatus gAppStatus = RUNNING;
 float gScaleFactor   = 50.0f,
       gAngle         = 0.0f,
       gPulseTime     = 0.0f;
+Vector2 gScale = BASE_SIZE;
 
 //PLANET
 Vector2 planetPosition    = ORIGIN;
@@ -37,11 +36,17 @@ float planetRotation = 0.0f;
 
 //STAR
 Vector2 starPosition = {0,0};
-Vector2 gScale = BASE_SIZE;
 float gOrbitLocation = 0.0f;
 
 //KIRBY
-Vector2 kirbyPosition = ORIGIN;
+enum KirbyDirection { RIGHT, DOWN, LEFT, UP };
+KirbyDirection kirbyDir = RIGHT;
+Vector2 kirbyPosition = {100, 100};
+Vector2 kirbyScale = {100.0f, 100.0f};
+float kirbySpeed = 7.0f;
+float kirbyRotation = 0.0f;
+float kirbyAmp = 45;
+float kirbyPulse = 0.0f;
 
 //Textures
 Texture2D starTexture;
@@ -86,7 +91,7 @@ void update()
     /*-----------------------PLANET MOVEMENT----------------------------*/
     planetRotation += 1.0f;
     planetPosition.x += planetSpeed;
-    if (planetPosition.x < 100 || planetPosition.x > SCREEN_WIDTH - 100){
+    if (planetPosition.x < 400 || planetPosition.x > SCREEN_WIDTH - 400){
         planetSpeed *= -1;
     }
     //Planet oscillation
@@ -103,7 +108,45 @@ void update()
     starPosition.y  = planetPosition.y + RADIUS * sin(gAngle);
 
     /*-----------------------KIRBY MOVEMENT----------------------------*/
-    
+    //rocking back and forth
+    kirbyRotation = sin(gPulseTime) * kirbyAmp;
+
+    switch(kirbyDir){
+        case RIGHT:
+            kirbyPosition.x += kirbySpeed;
+            if (kirbyPosition.x > SCREEN_WIDTH - 100){
+                kirbyPosition.x = SCREEN_WIDTH - 100;
+                kirbyDir = DOWN;
+            }
+            break;
+        case DOWN:
+            kirbyPosition.y += kirbySpeed;
+            if (kirbyPosition.y > SCREEN_HEIGHT - 100){
+                kirbyPosition.y = SCREEN_HEIGHT - 100;
+                kirbyDir = LEFT;
+            }
+            break;
+        case LEFT:
+            kirbyPosition.x -= kirbySpeed;
+            if (kirbyPosition.x < 100){
+                kirbyPosition.x = 100;
+                kirbyDir = UP;
+            }
+            break;
+        case UP:
+            kirbyPosition.y -= kirbySpeed;
+            if (kirbyPosition.y < 100){
+                kirbyPosition.y = 100;
+                kirbyDir = RIGHT;
+            }
+            break;
+    }
+    // scale
+    kirbyPulse += 1.0f;
+    float kirbyOffset = SIZE + kirbyAmp * sin(kirbyPulse/PULSE_SPEED);
+    kirbyScale.x = BASE_SIZE.x + kirbyOffset;
+    kirbyScale.y = BASE_SIZE.y + kirbyOffset;
+
 }
 
 void render()
@@ -190,13 +233,13 @@ void render()
     Rectangle kDestinationArea = {
         kirbyPosition.x,
         kirbyPosition.y,
-        static_cast<float>(gScale.x),
-        static_cast<float>(gScale.y)
+        static_cast<float>(kirbyScale.x),
+        static_cast<float>(kirbyScale.y)
     };
 
     Vector2 kObjectOrigin = {
-        static_cast<float>(gScale.x) / 2.0f,
-        static_cast<float>(gScale.y) / 2.0f
+        static_cast<float>(kirbyScale.x) / 2.0f,
+        static_cast<float>(kirbyScale.y) / 2.0f
     };
 
     // Render the texture on screen
@@ -205,7 +248,7 @@ void render()
         kTextureArea, 
         kDestinationArea, 
         kObjectOrigin, 
-        0, 
+        kirbyRotation, 
         WHITE
     );
     EndDrawing();
