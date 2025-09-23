@@ -2,8 +2,8 @@
 #include <math.h>
 
 // Global Constants
-constexpr int SCREEN_WIDTH        = 800 * 1.5f,
-              SCREEN_HEIGHT       = 450 * 1.5f,
+constexpr int SCREEN_WIDTH        = 1000 * 1.5f,
+              SCREEN_HEIGHT       = 600 * 1.5f,
               FPS                 = 60,
               SIDES               = 3,
               SIZE                = 100;
@@ -29,20 +29,30 @@ AppStatus gAppStatus = RUNNING;
 float gScaleFactor   = 50.0f,
       gAngle         = 0.0f,
       gPulseTime     = 0.0f;
+
+//PLANET
 Vector2 planetPosition    = ORIGIN;
 float planetSpeed = 2.0f;
 float planetRotation = 0.0f;
-//star
+
+//STAR
 Vector2 starPosition = {0,0};
 Vector2 gScale = BASE_SIZE;
 float gOrbitLocation = 0.0f;
+
+//KIRBY
+Vector2 kirbyPosition = ORIGIN;
+
+//Textures
 Texture2D starTexture;
 Texture2D planetTexture;
+Texture2D kirbyTexture;
 
 
 // free pixel art
 constexpr char PIXEL_STAR_FP[] = "assets/star.png";
 constexpr char PIXEL_EARTH_FP[] = "assets/earth.png";
+constexpr char PIXEL_KIRBY_FP[] = "assets/kirby.png";
 
 // Function Declarations
 Color ColorFromHex(const char *hex);
@@ -61,6 +71,7 @@ void initialise()
 
     starTexture = LoadTexture(PIXEL_STAR_FP);
     planetTexture = LoadTexture(PIXEL_EARTH_FP);
+    kirbyTexture = LoadTexture(PIXEL_KIRBY_FP);
 
     SetTargetFPS(FPS);
 }
@@ -72,6 +83,7 @@ void processInput()
 
 void update() 
 {
+    /*-----------------------PLANET MOVEMENT----------------------------*/
     planetRotation += 1.0f;
     planetPosition.x += planetSpeed;
     if (planetPosition.x < 100 || planetPosition.x > SCREEN_WIDTH - 100){
@@ -80,10 +92,7 @@ void update()
     //Planet oscillation
     gPulseTime += 0.05f;
     planetPosition.y = ORIGIN.y + sin(gPulseTime) * 50.0f; 
-    
-    /**
-     * ORBIT EFFECT
-     */
+    /*-----------------------STAR MOVEMENT----------------------------*/
     if (planetSpeed < 0){
         gAngle -= ORBIT_SPEED;
     }
@@ -92,6 +101,9 @@ void update()
     }
     starPosition.x  = planetPosition.x + RADIUS * cos(gAngle);
     starPosition.y  = planetPosition.y + RADIUS * sin(gAngle);
+
+    /*-----------------------KIRBY MOVEMENT----------------------------*/
+    
 }
 
 void render()
@@ -99,7 +111,8 @@ void render()
  BeginDrawing();
     ClearBackground(ColorFromHex(BG_COLOUR));
 
-        Rectangle pTextureArea = {
+    /*-----------------------PLANET DRAWING----------------------------*/
+    Rectangle pTextureArea = {
         /*
         TOP LEFT CORNER
         */
@@ -130,7 +143,7 @@ void render()
         planetRotation, 
         WHITE
     );
-
+    /*-----------------------STAR DRAWING----------------------------*/
     Rectangle sTextureArea = {
         /*
         TOP LEFT CORNER
@@ -160,6 +173,39 @@ void render()
         sDestinationArea, 
         sObjectOrigin, 
         gAngle, 
+        WHITE
+    );
+
+    /*-----------------------KIRBY DRAWING----------------------------*/
+    Rectangle kTextureArea = {
+        /*
+        TOP LEFT CORNER
+        */
+        0,0,
+        // bottom-right corner (of texture)
+        static_cast<float>(kirbyTexture.width),
+        static_cast<float>(kirbyTexture.height)
+    };
+
+    Rectangle kDestinationArea = {
+        kirbyPosition.x,
+        kirbyPosition.y,
+        static_cast<float>(gScale.x),
+        static_cast<float>(gScale.y)
+    };
+
+    Vector2 kObjectOrigin = {
+        static_cast<float>(gScale.x) / 2.0f,
+        static_cast<float>(gScale.y) / 2.0f
+    };
+
+    // Render the texture on screen
+    DrawTexturePro(
+        kirbyTexture, 
+        kTextureArea, 
+        kDestinationArea, 
+        kObjectOrigin, 
+        0, 
         WHITE
     );
     EndDrawing();
