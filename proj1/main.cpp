@@ -1,3 +1,13 @@
+/**
+* Author: Johnathan Huang
+* Assignment: Simple 2D Scene
+* Date due: 2025-09-27, 11:59pm
+* I pledge that I have completed this assignment without
+* collaborating with anyone else, in conformance with the
+* NYU School of Engineering Policies and Procedures on
+* Academic Misconduct.
+**/
+
 #include "base/start.h"
 #include <math.h>
 
@@ -9,10 +19,10 @@ constexpr int SCREEN_WIDTH        = 1000 * 1.5f,
               SIZE                = 100;
 
 constexpr float RADIUS          = 100.0f, // radius of the orbit
-                ORBIT_SPEED     = 0.05f,  // the speed at which the triangle will travel its orbit
-                MAX_AMPLITUDE   = 10.0f,  // by how much the triangle will be expanding/contracting
-                PULSE_SPEED     = 100.0f; // how fast the triangle is going to be "pulsing"
-constexpr char    BG_COLOUR[] = "#000000";
+                ORBIT_SPEED     = 0.05f,  // the speed of orbit
+                MAX_AMPLITUDE   = 10.0f,  
+                PULSE_SPEED     = 100.0f;
+
 constexpr Vector2 BASE_SIZE   = { (float) SIZE, (float) SIZE };
 
 
@@ -28,6 +38,12 @@ float gScaleFactor   = 50.0f,
       gAngle         = 0.0f,
       gPulseTime     = 0.0f;
 Vector2 gScale = BASE_SIZE;
+
+//COLOR
+enum BG_COLORS { BG_BLACK, BG_GREEN, BG_LIGHTBLUE };
+BG_COLORS screen_background = BG_BLACK;
+int colorTimer = 0;
+const char * BG_COLOUR = "#000000";
 
 //PLANET
 Vector2 planetPosition    = ORIGIN;
@@ -147,6 +163,29 @@ void update()
     kirbyScale.x = BASE_SIZE.x + kirbyOffset;
     kirbyScale.y = BASE_SIZE.y + kirbyOffset;
 
+    /*-----------------------BACKGROUND----------------------------*/
+    colorTimer++;
+    switch(screen_background){
+        case BG_BLACK:
+            BG_COLOUR = "#000000";
+            if (colorTimer > 100){
+                screen_background = BG_GREEN;
+            }
+            break;
+        case BG_GREEN:
+            BG_COLOUR = "#90EE90";
+            if (colorTimer > 200){
+                screen_background = BG_LIGHTBLUE;
+            }
+            break;
+        case BG_LIGHTBLUE:
+            BG_COLOUR = "#ADD8E6";
+            if (colorTimer > 300){
+                screen_background = BG_BLACK;
+                colorTimer = 0;
+            }
+            break;
+    }
 }
 
 void render()
