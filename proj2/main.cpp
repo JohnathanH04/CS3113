@@ -10,7 +10,7 @@
 
 #include "base/start.h"
 
-enum NUM_BALLS {ZERO, ONE, TWO, THREE};
+enum BALL_STATE {INACTIVE, ACTIVE};
 
 // Global Constants
 constexpr int SCREEN_WIDTH  = 1600,
@@ -67,7 +67,9 @@ Texture2D gChuckTexture,
 bool gPause = true;
 unsigned int startTime;
 bool two_player_game = true;
-NUM_BALLS number_of_balls = ZERO;
+BALL_STATE ball1 = INACTIVE;
+BALL_STATE ball2 = INACTIVE;
+BALL_STATE ball3 = INACTIVE;
 
 // Function Declarations
 void initialise();
@@ -153,18 +155,21 @@ void initialise()
 
 void processInput() 
 {
-    if (number_of_balls > 0){
-        gPause = false;
-    }
     if (gPause){
         if (IsKeyPressed(KEY_ONE)){
-            number_of_balls = ONE;
+            ball1 = ACTIVE;
+            gPause = false;
         }
         else if (IsKeyPressed(KEY_TWO)){
-            number_of_balls = TWO;
+            ball1 = ACTIVE;
+            ball2 = ACTIVE;
+            gPause = false;
         } 
         else if (IsKeyPressed(KEY_THREE)){
-            number_of_balls = THREE;
+            ball1 = ACTIVE;
+            ball2 = ACTIVE;
+            ball3 = ACTIVE;
+            gPause = false;
         }
         else{
             return;
@@ -256,6 +261,9 @@ void shutdown()
     CloseWindow(); 
     UnloadTexture(gBomberTexture);
     UnloadTexture(gChuckTexture);
+    UnloadTexture(gTennisBallTexture1);
+    UnloadTexture(gTennisBallTexture2);
+    UnloadTexture(gTennisBallTexture3);
 }
 
 int main(void)
