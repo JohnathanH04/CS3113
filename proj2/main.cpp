@@ -46,14 +46,14 @@ Vector2 gChuckPosition = CHUCK_POS,
         // MOVEMENT
         gChuckMovement = {0.0f, 0.0f},
         gBomberMovement = {0.0f, 0.0f},
-        gTennisBallMovement1 = {0.0f, 0.0f},
-        gTennisBallMovement2 = {0.0f, 0.0f},
-        gTennisBallMovement3 = {0.0f, 0.0f},
+        gTennisBallMovement1 = {-1.0f, 1.0f},
+        gTennisBallMovement2 = {1.0f, 1.0f},
+        gTennisBallMovement3 = {-1.0f, -1.0f},
 
 
         //Scale
-        gChuckScale = BASE_SIZE,
-        gBomberScale = BASE_SIZE,
+        gChuckScale = {200.0f, 250.f},
+        gBomberScale = {200.0f, 250.f},
         gTennisBallScale1 = {BASE_SIZE.x / 5.0f, BASE_SIZE.y / 5.0f},
         gTennisBallScale2 = {BASE_SIZE.x / 5.0f, BASE_SIZE.y / 5.0f},
         gTennisBallScale3 = {BASE_SIZE.x / 5.0f, BASE_SIZE.y / 5.0f};
@@ -64,7 +64,6 @@ Texture2D gChuckTexture,
           gTennisBallTexture2,
           gTennisBallTexture3;
 
-bool gPause = true;
 unsigned int startTime;
 bool two_player_game = true;
 BALL_STATE ball1 = INACTIVE;
@@ -155,25 +154,17 @@ void initialise()
 
 void processInput() 
 {
-    if (gPause){
-        if (IsKeyPressed(KEY_ONE)){
-            ball1 = ACTIVE;
-            gPause = false;
-        }
-        else if (IsKeyPressed(KEY_TWO)){
-            ball1 = ACTIVE;
-            ball2 = ACTIVE;
-            gPause = false;
-        } 
-        else if (IsKeyPressed(KEY_THREE)){
-            ball1 = ACTIVE;
-            ball2 = ACTIVE;
-            ball3 = ACTIVE;
-            gPause = false;
-        }
-        else{
-            return;
-        }
+    if (IsKeyPressed(KEY_ONE)){
+        ball1 = ACTIVE;
+    }
+    else if (IsKeyPressed(KEY_TWO)){
+        ball1 = ACTIVE;
+        ball2 = ACTIVE;
+    } 
+    else if (IsKeyPressed(KEY_THREE)){
+        ball1 = ACTIVE;    
+        ball2 = ACTIVE;
+        ball3 = ACTIVE;
     }
 
     if (IsKeyPressed(KEY_T)){
@@ -196,7 +187,6 @@ void processInput()
 
 void update() 
 {
-    if (gPause) return;
     // Delta time
     float ticks = (float) GetTime();
     float deltaTime = ticks - gPreviousTicks;
@@ -207,13 +197,14 @@ void update()
         gBomberPosition.y + SPEED * gBomberMovement.y * deltaTime
     };
 
+    // bound bomber
     if (gBomberPosition.y + gBomberScale.y / 2 >= SCREEN_HEIGHT){
             gBomberPosition.y = SCREEN_HEIGHT - gBomberScale.y / 2;
         }
     else if (gBomberPosition.y - gBomberScale.y /2 <= 0){
             gBomberPosition.y =  gBomberScale.y /2;
     }
-
+    // single player
     if (!two_player_game){
         if (gChuckPosition.y + gChuckScale.y / 2 >= SCREEN_HEIGHT){
             gChuckMovement.y = -1;
@@ -222,11 +213,12 @@ void update()
             gChuckMovement.y = 1;
         }
     }
-
+    //bound chuck
     gChuckPosition = {
         gChuckPosition.x,
         gChuckPosition.y + SPEED * gChuckMovement.y * deltaTime
     };
+
     if (gChuckPosition.y + gChuckScale.y / 2 >= SCREEN_HEIGHT){
         gChuckPosition.y = SCREEN_HEIGHT - gChuckScale.y / 2;
     }
@@ -234,8 +226,66 @@ void update()
         gChuckPosition.y =  gChuckScale.y /2;
     }
 
-    // if (isColliding(
-    // )) printf("Collision @ %us in game time.\n", (unsigned) time(NULL) - startTime);
+    if (ball1 == ACTIVE){
+        gTennisBallPosition1= {
+            gTennisBallPosition1.x + SPEED * gTennisBallMovement1.x * deltaTime,
+            gTennisBallPosition1.y + SPEED * gTennisBallMovement1.y * deltaTime
+        };
+        
+        if (gTennisBallPosition1.y < gTennisBallScale1.y / 2 || gTennisBallPosition1.y + gTennisBallScale1.y / 2 > SCREEN_HEIGHT){
+            gTennisBallMovement1.y *= -1;
+        }
+
+        if (isColliding(&gChuckPosition, &gChuckScale, &gTennisBallPosition1, &gTennisBallScale1)){
+            gTennisBallMovement1.x = -fabs(gTennisBallMovement1.x);
+        }
+
+        if (isColliding(&gBomberPosition, &gBomberScale, &gTennisBallPosition1, &gTennisBallScale1)){
+            gTennisBallMovement1.x = fabs(gTennisBallMovement1.x);
+        }
+
+    }
+
+    if (ball2 == ACTIVE){
+        gTennisBallPosition2= {
+            gTennisBallPosition2.x + SPEED * gTennisBallMovement2.x * deltaTime,
+            gTennisBallPosition2.y + SPEED * gTennisBallMovement2.y * deltaTime
+        };
+        
+        if (gTennisBallPosition2.y < gTennisBallScale2.y / 2 || gTennisBallPosition2.y + gTennisBallScale2.y / 2 > SCREEN_HEIGHT){
+            gTennisBallMovement2.y *= -1;
+        }
+
+        if (isColliding(&gChuckPosition, &gChuckScale, &gTennisBallPosition2, &gTennisBallScale2)){
+           gTennisBallMovement2.x = -fabs(gTennisBallMovement2.x);
+        }
+
+        if (isColliding(&gBomberPosition, &gBomberScale, &gTennisBallPosition2, &gTennisBallScale2)){
+            gTennisBallMovement2.x = fabs(gTennisBallMovement2.x);
+        }
+
+    }
+
+    if (ball3 == ACTIVE){
+        gTennisBallPosition3= {
+            gTennisBallPosition3.x + SPEED * gTennisBallMovement3.x * deltaTime,
+            gTennisBallPosition3.y + SPEED * gTennisBallMovement3.y * deltaTime
+        };
+        
+        if (gTennisBallPosition3.y < gTennisBallScale3.y / 2 || gTennisBallPosition3.y + gTennisBallScale3.y / 2 > SCREEN_HEIGHT){
+            gTennisBallMovement3.y *= -1;
+        }
+
+        if (isColliding(&gChuckPosition, &gChuckScale, &gTennisBallPosition3, &gTennisBallScale3)){
+            gTennisBallMovement3.x = -fabs(gTennisBallMovement3.x);
+        }
+
+        if (isColliding(&gBomberPosition, &gBomberScale, &gTennisBallPosition3, &gTennisBallScale3)){
+            gTennisBallMovement3.x = fabs(gTennisBallMovement3.x);
+        }
+    }
+
+
 }
 
 void render()
@@ -250,8 +300,15 @@ void render()
     renderObject(&gChuckTexture, &gChuckPosition, &gChuckScale);
 
     //Render Tennis Balls
-
-
+    if (ball1 == ACTIVE){
+        renderObject(&gTennisBallTexture1, &gTennisBallPosition1, &gTennisBallScale1);
+    }
+    if (ball2 == ACTIVE){
+        renderObject(&gTennisBallTexture2, &gTennisBallPosition2, &gTennisBallScale2);
+    }
+    if (ball3 == ACTIVE){
+        renderObject(&gTennisBallTexture3, &gTennisBallPosition3, &gTennisBallScale3);
+    }
 
     EndDrawing();
 }
