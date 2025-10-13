@@ -362,6 +362,8 @@ void shutdown()
     UnloadTexture(gTennisBallTexture2);
     UnloadTexture(gTennisBallTexture3);
     UnloadTexture(gBackgroundTexture);
+    UnloadTexture(gWinTexture1);
+    UnloadTexture(gWinTexture2);
 }
 
 int main(void)
