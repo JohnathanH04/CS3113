@@ -14,7 +14,7 @@ enum BALL_STATE {INACTIVE, ACTIVE};
 
 // Global Constants
 constexpr int SCREEN_WIDTH  = 1600,
-              SCREEN_HEIGHT = 900,
+              SCREEN_HEIGHT = 798,
               FPS           = 60,
               SIZE          = 500 / 2,
               SPEED         = 200;
@@ -29,7 +29,10 @@ constexpr Vector2 ORIGIN         = { SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2 },
 
 constexpr char  BOMBER_FP[]  = "assets/bomber.png",
                 CHUCK_FP[] = "assets/chuck.png",
-                TENNISBALL_FP[] = "assets/Tennisball.png";
+                TENNISBALL_FP[] = "assets/Tennisball.png",
+                BACKGROUND_FP[] = "assets/background.png",
+                PLAYER1_WIN_FP[] = "assets/Player1Win.png",
+                PLAYER2_WIN_FP[] = "assets/Player2Win.png";
 
 
 // Global Variables
@@ -62,10 +65,15 @@ Texture2D gChuckTexture,
           gBomberTexture,
           gTennisBallTexture1,
           gTennisBallTexture2,
-          gTennisBallTexture3;
+          gTennisBallTexture3,
+          gWinTexture1,
+          gWinTexture2,
+          gBackgroundTexture;
 
 unsigned int startTime;
 bool two_player_game = true;
+int winner = 0;
+bool winner_found = false;
 BALL_STATE ball1 = INACTIVE;
 BALL_STATE ball2 = INACTIVE;
 BALL_STATE ball3 = INACTIVE;
@@ -148,6 +156,9 @@ void initialise()
     gTennisBallTexture1 = LoadTexture(TENNISBALL_FP);
     gTennisBallTexture2 = LoadTexture(TENNISBALL_FP);
     gTennisBallTexture3 = LoadTexture(TENNISBALL_FP);
+    gBackgroundTexture = LoadTexture(BACKGROUND_FP);
+    gWinTexture1 = LoadTexture(PLAYER1_WIN_FP);
+    gWinTexture2 = LoadTexture(PLAYER2_WIN_FP);
 
     SetTargetFPS(FPS);
 }
@@ -237,13 +248,21 @@ void update()
         }
 
         if (isColliding(&gChuckPosition, &gChuckScale, &gTennisBallPosition1, &gTennisBallScale1)){
-            gTennisBallMovement1.x = -fabs(gTennisBallMovement1.x);
+            gTennisBallMovement1.x *= -1;
         }
 
         if (isColliding(&gBomberPosition, &gBomberScale, &gTennisBallPosition1, &gTennisBallScale1)){
-            gTennisBallMovement1.x = fabs(gTennisBallMovement1.x);
+            gTennisBallMovement1.x *= -1;
         }
 
+        if (gTennisBallPosition1.x < 0){
+            winner = 2;
+            winner_found = true;
+        }
+        else if (gTennisBallPosition1.x > SCREEN_WIDTH){
+            winner = 1;
+            winner_found = true;
+        }
     }
 
     if (ball2 == ACTIVE){
@@ -257,13 +276,20 @@ void update()
         }
 
         if (isColliding(&gChuckPosition, &gChuckScale, &gTennisBallPosition2, &gTennisBallScale2)){
-           gTennisBallMovement2.x = -fabs(gTennisBallMovement2.x);
+           gTennisBallMovement2.x *= -1;
         }
 
         if (isColliding(&gBomberPosition, &gBomberScale, &gTennisBallPosition2, &gTennisBallScale2)){
-            gTennisBallMovement2.x = fabs(gTennisBallMovement2.x);
+            gTennisBallMovement2.x *= -1;
         }
-
+        if (gTennisBallPosition2.x < 0){
+            winner = 2;
+            winner_found = true;
+        }
+        else if (gTennisBallPosition2.x > SCREEN_WIDTH){
+            winner = 1;
+            winner_found = true;
+        }
     }
 
     if (ball3 == ACTIVE){
@@ -277,39 +303,53 @@ void update()
         }
 
         if (isColliding(&gChuckPosition, &gChuckScale, &gTennisBallPosition3, &gTennisBallScale3)){
-            gTennisBallMovement3.x = -fabs(gTennisBallMovement3.x);
+            gTennisBallMovement3.x *= -1;
         }
-
         if (isColliding(&gBomberPosition, &gBomberScale, &gTennisBallPosition3, &gTennisBallScale3)){
-            gTennisBallMovement3.x = fabs(gTennisBallMovement3.x);
+            gTennisBallMovement3.x *= -1;
+        }
+        if (gTennisBallPosition3.x < 0){
+            winner = 2;
+            winner_found = true;
+        }
+        else if (gTennisBallPosition3.x > SCREEN_WIDTH){
+            winner = 1;
+            winner_found = true;
         }
     }
-
-
 }
-
 void render()
 {
     BeginDrawing();
     ClearBackground(ColorFromHex(BG_COLOUR));
+    DrawTexture(gBackgroundTexture, 0, 0, WHITE);
 
-    // Render Bomber
-    renderObject(&gBomberTexture, &gBomberPosition, &gBomberScale);
-
-    // Render Chuck
-    renderObject(&gChuckTexture, &gChuckPosition, &gChuckScale);
-
-    //Render Tennis Balls
-    if (ball1 == ACTIVE){
-        renderObject(&gTennisBallTexture1, &gTennisBallPosition1, &gTennisBallScale1);
+    if (winner_found){
+        if (winner == 1){
+            DrawTexture(gWinTexture1, 0, 0, WHITE);
+        }
+        else{
+            DrawTexture(gWinTexture2, 0, 0, WHITE);
+        }
     }
-    if (ball2 == ACTIVE){
-        renderObject(&gTennisBallTexture2, &gTennisBallPosition2, &gTennisBallScale2);
-    }
-    if (ball3 == ACTIVE){
-        renderObject(&gTennisBallTexture3, &gTennisBallPosition3, &gTennisBallScale3);
-    }
+    else{
+        // Render Bomber
+        renderObject(&gBomberTexture, &gBomberPosition, &gBomberScale);
 
+        // Render Chuck
+        renderObject(&gChuckTexture, &gChuckPosition, &gChuckScale);
+
+        //Render Tennis Balls
+        if (ball1 == ACTIVE){
+            renderObject(&gTennisBallTexture1, &gTennisBallPosition1, &gTennisBallScale1);
+        }
+        if (ball2 == ACTIVE){
+            renderObject(&gTennisBallTexture2, &gTennisBallPosition2, &gTennisBallScale2);
+        }
+        if (ball3 == ACTIVE){
+            renderObject(&gTennisBallTexture3, &gTennisBallPosition3, &gTennisBallScale3);
+       }
+    }
     EndDrawing();
 }
 
@@ -321,6 +361,7 @@ void shutdown()
     UnloadTexture(gTennisBallTexture1);
     UnloadTexture(gTennisBallTexture2);
     UnloadTexture(gTennisBallTexture3);
+    UnloadTexture(gBackgroundTexture);
 }
 
 int main(void)
