@@ -131,7 +131,7 @@ void initialise()
             {TILE_DIMENSION, TILE_DIMENSION});
         gState.blocks[i].setSpeed(1.0f);
     }
-
+    //generate blocks
     gState.blocks[0].setPosition(
         {ORIGIN.x - TILE_DIMENSION * 6, ORIGIN.y - TILE_DIMENSION});
     gState.blocks[1].setPosition(
@@ -140,7 +140,8 @@ void initialise()
         {ORIGIN.x + TILE_DIMENSION * 8, ORIGIN.y - TILE_DIMENSION + 200.0f});
     gState.blocks[3].setPosition(
         {ORIGIN.x + TILE_DIMENSION, ORIGIN.y - TILE_DIMENSION + 200.0f});
-
+    
+    // choose to make sure certain blocks have movement affected
     gState.blocks[1].setMovement({1.0f, 0});
     gState.blocks[2].setMovement({-1.0f,0});
 

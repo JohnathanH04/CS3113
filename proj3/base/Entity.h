@@ -125,10 +125,11 @@ public:
     bool isCollidingBottom() const { return mIsCollidingBottom; }
 
     std::map<Direction, std::vector<int>> getAnimationAtlas() const { return mAnimationAtlas; }
-
+    //set velocity to 0 for moving platform
     void setVelocity(Vector2 newVelo){
         mVelocity = newVelo;
     }
+    //game status for end screen
     void setGStatus(currentGStatus currentStatus){
         currentGameStatus = currentStatus;
     }

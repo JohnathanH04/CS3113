@@ -183,6 +183,7 @@ void Entity::update(float deltaTime, Entity *player, Entity *collidableEntities,
     if (mEntityType == PLATFORM) return;
 
     else if (mEntityType == BLOCK){
+        //moving platform
         mVelocity.x += mMovement.x * mSpeed;
         mPosition.x += mVelocity.x * deltaTime;
     }
