@@ -1,0 +1,58 @@
+#include "Entity.h"
+
+#ifndef SCENE_H
+#define SCENE_H
+
+struct GameState
+{
+    Entity *rabbit;
+    Entity *monkey;
+    Map *map;
+
+    Music bgm;
+    Sound jumpSound;
+    Sound hitSound;
+    Sound flagSound;
+
+    Camera2D camera;
+
+    // hardcode progression
+    int nextSceneID;
+    int curSceneID;
+    // track cur lives
+    int cur_lives;
+    // boolean checkers
+    bool reset_scene = false;
+    bool next_scene = false;
+    //used on level C to set winner to true if player wins
+    bool levelComplete = false;
+    // for end screen scenario
+    bool winner = false;
+};
+
+class Scene 
+{
+protected:
+    GameState mGameState;
+    Vector2 mOrigin;
+    const char *mBGColourHexCode = "#000000";
+    
+public:
+    Scene();
+    Scene(Vector2 origin, const char *bgHexCode);
+
+    virtual void initialise() = 0;
+    virtual void update(float deltaTime) = 0;
+    virtual void render() = 0;
+    // RENDER UI TO SHOW NUMBER OF LIVES
+    virtual void renderUI() = 0;
+    virtual void shutdown() = 0;
+    
+    GameState   getState()           const { return mGameState; }
+    Vector2     getOrigin()          const { return mOrigin;    }
+    const char* getBGColourHexCode() const { return mBGColourHexCode; }
+    void        setLives(int value)        { mGameState.cur_lives = value; }
+    void        setWinner (bool value)     { mGameState.winner = value; }
+};
+
+#endif
