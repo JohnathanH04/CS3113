@@ -7,8 +7,8 @@ LevelC::~LevelC() { shutdown(); }
 
 void LevelC::initialise()
 {
-   mGameState.curSceneID = 3;
-   mGameState.nextSceneID = 4;
+   mGameState.curSceneID = 1;
+   mGameState.nextSceneID = 2;
    mGameState.reset_scene = false;
    mGameState.next_scene = false;
 
@@ -35,6 +35,7 @@ void LevelC::initialise()
    /*
       ----------- PROTAGONIST -----------
    */
+  
    std::map<Direction, std::vector<int>> rabbitAnimationAtlas = {
       {DOWN,  {  0,  1,  2,  3 }},
       {LEFT,  {  8,  9, 10, 11 }},
@@ -44,11 +45,11 @@ void LevelC::initialise()
 
    float sizeRatio  = 48.0f / 64.0f;
 
-   
+
    mGameState.rabbit = new Entity(
       {mOrigin.x - 920.0f, mOrigin.y - 200.0f}, // position
       {250.0f * sizeRatio, 250.0f},             // scale
-      "assets/char_spritesheet.png",                   // texture file address
+      "assets/char_spritesheet.png",            // texture file address
       ATLAS,                                    // single image or atlas?
       { 4, 4 },                                 // atlas dimensions
       rabbitAnimationAtlas,                    // actual atlas
@@ -57,41 +58,37 @@ void LevelC::initialise()
 
    mGameState.rabbit->setJumpingPower(600.0f);
    mGameState.rabbit->setColliderDimensions({
-      mGameState.rabbit->getScale().x / 3.5f,
-      mGameState.rabbit->getScale().y / 3.0f
+      mGameState.rabbit->getScale().x / 10.5f,
+      mGameState.rabbit->getScale().y / 10.0f
    });
+   
    mGameState.rabbit->setAcceleration({0.0f, ACCELERATION_OF_GRAVITY});
 
-    /*
-        ----------- monkey -----------
-    */
-    std::map<Direction, std::vector<int>> monkeyAnimationAtlas = {
-        {LEFT,  { 17, 18, 19, 20 }},
-        {RIGHT, { 49, 50, 51, 52 }},
-    };
 
-    // @see dyru.itch.io/pixel-monkey-template
-    mGameState.monkey = new Entity(
-        {mOrigin.x - 600.0f, mOrigin.y - 100.0f}, // position
-        {100.0f, 100.0f},                       // scale
-        "assets/loose_sprites.png",                // texture file address
-        ATLAS,                                  // single image or atlas?
-        { 8, 8 },                       // atlas dimensions
-        monkeyAnimationAtlas,                    // actual atlas
-        NPC                                     // entity type
-    );
+   /*
+      ----------- BULLETS -----------
+   */
 
-    mGameState.monkey->setAIType(JUMPER);
-    mGameState.monkey->setJumpingPower(800.0f);
+   mGameState.bullet = new Entity[NUM_BULLETS];
+   
+   for (int i = 0; i < NUM_BULLETS; i++){
+      mGameState.bullet[i] = Entity(
+         {0,0},
+         {30.0f, 30.0f},
+         "assets/1.png",
+         BULLET
+      );
+      mGameState.bullet[i].setTexture("assets/1.png");
 
-    mGameState.monkey->setColliderDimensions({
-        mGameState.monkey->getScale().x / 2.0f,
-        mGameState.monkey->getScale().y
-    });
 
-    mGameState.monkey->setAcceleration({0.0f, ACCELERATION_OF_GRAVITY});
-    mGameState.monkey->setDirection(LEFT);
-    mGameState.monkey->render(); // calling render once at the beginning to switch monkey's direction
+      mGameState.bullet[i].deactivate();
+      mGameState.bullet[i].setColliderDimensions({
+         mGameState.bullet[i].getScale().x / 5.0f, 
+         mGameState.bullet[i].getScale().y / 5.0f
+      });
+      mGameState.bulletQueue.push(i);
+      mBulletRespawn[i] = GetRandomValue(60,1080) / 60.0f;
+   }
 
    /*
       ----------- CAMERA -----------
@@ -111,35 +108,39 @@ void LevelC::update(float deltaTime)
       deltaTime,      // delta time / fixed timestep
       nullptr,        // player
       mGameState.map, // map
-      mGameState.monkey, // collidable entities
-      1               // col. entity count
+      mGameState.bullet, // collidable entities
+      NUM_BULLETS              // col. entity count
    );
 
-   mGameState.monkey->update(
-      deltaTime,      // delta time / fixed timestep
-      mGameState.rabbit,        // player
-      mGameState.map, // map
-      nullptr,        // collidable entities
-      0               // col. entity count
-   );
+   Vector2 currentPlayerPosition = { mGameState.rabbit->getPosition().x, mGameState.rabbit->getPosition().y };
 
-   Vector2 currentPlayerPosition = { mGameState.rabbit->getPosition().x, mOrigin.y };
+   for (int i = 0; i < NUM_BULLETS; i++){
+      int index = mGameState.bulletQueue.front();
+      mGameState.bulletQueue.pop();
+      mGameState.bulletQueue.push(index);
 
-   if (mGameState.rabbit->getPosition().y > 800.0f){
-      mGameState.reset_scene = true;
-      PlaySound(mGameState.hitSound);
-      mGameState.cur_lives--;
-   }
+      Entity& b = mGameState.bullet[index];
 
-   if (mGameState.rabbit->isCollidingEnemy()){
-      mGameState.reset_scene = true;
-      PlaySound(mGameState.hitSound);
-      mGameState.cur_lives--;
-   }
-
-   if (mGameState.rabbit->getPosition().x > 1380.0f){
-      PlaySound(mGameState.flagSound);
-      mGameState.levelComplete = true;
+      if (!b.isActive()){
+         mBulletRespawn[index] -= deltaTime;
+         if (mBulletRespawn[index] <= 0.0f){
+            float _spawnX = 1380.0f;
+            float _spawnY = GetRandomValue(50, 500);
+            b.setPosition({ _spawnX, _spawnY});
+            b.setMovement({ -0.75f, 0.0f });
+            b.activate();
+            mBulletRespawn[index] = GetRandomValue(60, 720) / 60.0f;
+         }
+      }
+      else{
+         b.update(deltaTime, mGameState.rabbit, mGameState.map, mGameState.rabbit, 1);
+         if (b.isCollidingPlayer()){
+            b.deactivate();
+         }
+         if (b.getPosition().x < -200.0f){
+            b.deactivate();
+         }
+      }
    }
 
    panCamera(&mGameState.camera, &currentPlayerPosition);
@@ -150,8 +151,13 @@ void LevelC::render()
    ClearBackground(ColorFromHex(mBGColourHexCode));
 
    mGameState.rabbit->render();
-   mGameState.monkey->render();
    mGameState.map->render();
+
+   for (int i = 0; i < NUM_BULLETS; i++){
+      if (mGameState.bullet[i].isActive()){
+         mGameState.bullet[i].render();
+      }
+   }
 }
 
 void LevelC::renderUI()
@@ -163,7 +169,7 @@ void LevelC::shutdown()
 {
    delete mGameState.rabbit;
    delete mGameState.map;
-   delete mGameState.monkey;
+   delete[] mGameState.bullet;
 
    UnloadMusicStream(mGameState.bgm);
    UnloadSound(mGameState.jumpSound);

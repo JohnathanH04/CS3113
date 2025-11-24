@@ -1,16 +1,13 @@
-
-
-
 #include "base/LevelC.h"
 
 // Global Constants
 constexpr int SCREEN_WIDTH     = 1000,
               SCREEN_HEIGHT    = 600,
               FPS              = 120,
-              NUMBER_OF_LEVELS = 5;
+              NUMBER_OF_LEVELS = 4;
 
 constexpr Vector2 ORIGIN      = { SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2 };
-            
+
 constexpr float FIXED_TIMESTEP = 1.0f / 60.0f;
 
 // Global Variables
@@ -27,7 +24,7 @@ LevelB *gLevelB = nullptr;
 LevelC *gLevelC = nullptr;
 
 //life tracker
-int lives_left = 3;
+int lives_left = 2000;
 bool winner;
 
 // Function Declarations
@@ -57,7 +54,7 @@ void switchToScene(Scene *scene, int lives)
 
 void initialise()
 {
-    InitWindow(SCREEN_WIDTH, SCREEN_HEIGHT, "Rise of AI");
+    InitWindow(SCREEN_WIDTH, SCREEN_HEIGHT, "Rise");
     InitAudioDevice();
 
     //push back all created levels
@@ -71,7 +68,7 @@ void initialise()
     gLevels.push_back(gLevelB);
     gLevels.push_back(gLevelC);
 
-    switchToScene(gLevels[0], 3);
+    switchToScene(gLevels[0], 2000);
 
     SetTargetFPS(FPS);
 }
@@ -81,11 +78,11 @@ void processInput()
     // check for start/end menu keys --> make sure scene cannot call other functions until it is a playable level
     if (gCurrentScene == gLevels[0] || gCurrentScene == gLevels[4]){
         if (gCurrentScene == gLevels[0] && IsKeyPressed(KEY_ENTER)){
-            switchToScene(gLevels[gCurrentScene->getState().nextSceneID], 3);
+            switchToScene(gLevels[2], 2000);
         }
 
         if (gCurrentScene == gLevels[4] && IsKeyPressed(KEY_R)){
-            switchToScene(gLevels[gCurrentScene->getState().nextSceneID], 3);
+            switchToScene(gLevels[gCurrentScene->getState().nextSceneID], 2000);
         }
 
         if (IsKeyPressed(KEY_Q) || WindowShouldClose()) {
@@ -100,8 +97,36 @@ void processInput()
     else if (IsKeyDown(KEY_W)) gCurrentScene->getState().rabbit->moveUp();
     else if (IsKeyDown(KEY_S)) gCurrentScene->getState().rabbit->moveDown();
 
-    if (gCurrentScene->getState().rabbit->isCollidingEnemy()){
-        lives_left --;
+    if (IsKeyPressed(KEY_SPACE)){
+        if (!gCurrentScene->getState().ammoQueue.empty()){
+            int index = gCurrentScene->getState().ammoQueue.front();
+
+            Entity& ammo = gCurrentScene->getState().ammo[index];
+            if (!ammo.isActive()){
+                gCurrentScene->getState().ammoQueue.pop();           
+                ammo.setPosition(gCurrentScene->getState().rabbit->getPosition());
+                
+                Direction ammo_movement = gCurrentScene->getState().rabbit->getDirection();
+                
+                if (ammo_movement == RIGHT){
+                    ammo.setMovement({2.0f, 0.0f});
+                    ammo.setAngle(0.0f);
+                }
+                else if (ammo_movement == LEFT){
+                    ammo.setMovement({-2.0f, 0.0f});
+                    ammo.setAngle(180.0f);
+                }
+                else if (ammo_movement == DOWN){
+                    ammo.setMovement({0.0f, 2.0f});
+                    ammo.setAngle(90.0f);
+                }
+                else if (ammo_movement == UP){
+                    ammo.setMovement({0.0f, -2.0f});
+                    ammo.setAngle(-90.0f);
+                }
+                ammo.activate();
+            }
+        }
     }
 
     if (GetLength(gCurrentScene->getState().rabbit->getMovement()) > 1.0f) 
@@ -170,10 +195,29 @@ int main(void)
     {
         processInput();
         update();
+        if (lives_left > 0){
+            lives_left = gCurrentScene->getState().cur_lives;
+
+            if (gCurrentScene->getState().reset_scene){
+                int id = gCurrentScene->getState().curSceneID;
+                //reset scene
+                switchToScene(gLevels[id], lives_left);
+            }
+
+            if (gCurrentScene->getState().next_scene){
+                int id = gCurrentScene->getState().nextSceneID;
+                //switch to next scene
+                switchToScene(gLevels[id], lives_left);
+            }
+        }
+        else if (lives_left == 0){
+            lives_left = 2000;
+            winner = false;
+            switchToScene(gLevels[0], 2000);
+        }
         render();
     }
 
     shutdown();
-
     return 0;
 }

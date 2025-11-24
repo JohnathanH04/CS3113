@@ -50,13 +50,8 @@ void Entity::checkCollisionY(Entity *collidableEntities, int collisionCheckCount
             // STEP 3: "Unclip" ourselves from the other entity, and zero our
             //         vertical velocity.
             if (collidableEntity->mEntityType == PLAYER){
-                mCollidingEnemy = true;
-                return;
-            }
-
-            if (collidableEntity->mEntityType == BULLET){
-                mCollidingEnemy = true;
-                return;
+                mCollidingPlayer = true;
+                continue;
             }
             
             if (mVelocity.y > 0) 
@@ -93,14 +88,15 @@ void Entity::checkCollisionX(Entity *collidableEntities, int collisionCheckCount
             // Skip if barely touching vertically (standing on platform)
             if (yOverlap < Y_COLLISION_THRESHOLD) continue;
 
-            if (collidableEntity->mEntityType == PLAYER){
-                mCollidingEnemy = true;
-                return;
+            if (mEntityType == AMMO && collidableEntity->mEntityType == NPC){
+                printf("collision");
+                deactivate();
+                collidableEntity->deactivate();
             }
 
-            if (collidableEntity->mEntityType == BULLET){
-                mCollidingEnemy = true;
-                return;
+            if (collidableEntity->mEntityType == PLAYER){
+                mCollidingPlayer = true;
+                continue;
             }
 
             float xDistance = fabs(mPosition.x - collidableEntity->mPosition.x);
@@ -239,7 +235,7 @@ void Entity::AIFollow(Entity *target)
     switch (mAIState)
     {
     case IDLE:
-        if (Vector2Distance(mPosition, target->getPosition()) < 600.0f) 
+        if (Vector2Distance(mPosition, target->getPosition()) < 800.0f) 
             mAIState = WALKING;
         break;
 
@@ -249,7 +245,7 @@ void Entity::AIFollow(Entity *target)
         if (mPosition.x > target->getPosition().x) moveLeft();
         else                                       moveRight();
 
-        if (mPosition.y > target->getPosition().y) moveDown();
+        if (mPosition.y < target->getPosition().y) moveDown();
         else                                       moveUp();
     
     default:

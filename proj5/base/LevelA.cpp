@@ -7,6 +7,7 @@ LevelA::~LevelA() { shutdown(); }
 
 void LevelA::initialise()
 {
+   mTimer = 30.0f;
    mGameState.curSceneID = 1;
    mGameState.nextSceneID = 2;
    mGameState.reset_scene = false;
@@ -47,9 +48,9 @@ void LevelA::initialise()
 
 
    mGameState.rabbit = new Entity(
-      {mOrigin.x - 920.0f, mOrigin.y - 200.0f}, // position
+      {mOrigin.x - 2000.0f, mOrigin.y - 200.0f}, // position
       {250.0f * sizeRatio, 250.0f},             // scale
-      "assets/char_spritesheet.png",                   // texture file address
+      "assets/char_spritesheet.png",            // texture file address
       ATLAS,                                    // single image or atlas?
       { 4, 4 },                                 // atlas dimensions
       rabbitAnimationAtlas,                    // actual atlas
@@ -58,8 +59,8 @@ void LevelA::initialise()
 
    mGameState.rabbit->setJumpingPower(600.0f);
    mGameState.rabbit->setColliderDimensions({
-      mGameState.rabbit->getScale().x / 12.5f,
-      mGameState.rabbit->getScale().y / 12.0f
+      mGameState.rabbit->getScale().x / 7.5f,
+      mGameState.rabbit->getScale().y / 7.0f
    });
    
    mGameState.rabbit->setAcceleration({0.0f, ACCELERATION_OF_GRAVITY});
@@ -69,22 +70,40 @@ void LevelA::initialise()
       ----------- BULLETS -----------
    */
 
-   mGameState.monkey = new Entity[NUM_BULLETS];
+   mGameState.bullet = new Entity[NUM_BULLETS];
    
    for (int i = 0; i < NUM_BULLETS; i++){
-      mGameState.monkey[i] = Entity(
+      mGameState.bullet[i] = Entity(
          {0,0},
          {30.0f, 30.0f},
-         "assets/bullet0.png",
+         "assets/1.png",
          BULLET
       );
-      mGameState.monkey[i].deactivate();
-      mGameState.monkey[i].setColliderDimensions({
-         mGameState.monkey[i].getScale().x / 5.0f, 
-         mGameState.monkey[i].getScale().y / 5.0f
+      mGameState.bullet[i].setTexture("assets/1.png");
+      mGameState.bullet[i].deactivate();
+      mGameState.bullet[i].setColliderDimensions({
+         mGameState.bullet[i].getScale().x / 2.0f, 
+         mGameState.bullet[i].getScale().y / 2.0f
       });
       mGameState.bulletQueue.push(i);
       mBulletRespawn[i] = GetRandomValue(60,1080) / 60.0f;
+   }
+
+   /*
+      ----------- CANNONS -----------
+   */
+
+   mGameState.cannon = new Entity[NUM_CANNON];
+
+   for (int i = 0; i < NUM_CANNON; i++){
+      mGameState.cannon[i] = Entity(
+         {2000.0f, 50.0f + (75.0f * i)},
+         {75.0f, 75.0f},
+         "assets/cannon.png",
+         CANNON
+      );
+      mGameState.cannon[i].setTexture("assets/cannon.png");
+      mGameState.cannon[i].activate();
    }
 
    /*
@@ -100,14 +119,23 @@ void LevelA::initialise()
 void LevelA::update(float deltaTime)
 {
    UpdateMusicStream(mGameState.bgm);
+   mTimer -= deltaTime;
+
+   if (mTimer <= 0.0f){
+      mGameState.reset_scene = true;
+   }
 
    mGameState.rabbit->update(
       deltaTime,      // delta time / fixed timestep
       nullptr,        // player
       mGameState.map, // map
-      mGameState.monkey, // collidable entities
+      mGameState.bullet, // collidable entities
       NUM_BULLETS              // col. entity count
    );
+
+   if (mGameState.rabbit->getPosition().x > 2200.0f){
+      mGameState.next_scene = true;
+   }
 
    Vector2 currentPlayerPosition = { mGameState.rabbit->getPosition().x, mGameState.rabbit->getPosition().y };
 
@@ -116,30 +144,34 @@ void LevelA::update(float deltaTime)
       mGameState.bulletQueue.pop();
       mGameState.bulletQueue.push(index);
 
-      Entity& b = mGameState.monkey[index];
-
-      if (!b.isActive()){
-         mBulletRespawn[index] -= deltaTime;
-         if (mBulletRespawn[i] <= 0.0f){
-            float _spawnX = 1380.0f;
-            float _spawnY = GetRandomValue(50, 500);
-            b.setPosition({ _spawnX, _spawnY});
-            b.setMovement({ -0.75f, 0.0f });
-            b.activate();
-            mBulletRespawn[index] = GetRandomValue(60, 720) / 60.0f;
+      Entity& b = mGameState.bullet[index];
+      if (mGameState.rabbit->getPosition().x < 1850.0f){
+         if (!b.isActive()){
+            mBulletRespawn[index] -= deltaTime;
+            if (mBulletRespawn[index] <= 0.0f){
+               float _spawnX = 2000.0f;
+               float _spawnY = GetRandomValue(25, 525);
+               b.setPosition({ _spawnX, _spawnY});
+               b.setMovement({ -0.75f, 0.0f });
+               b.activate();
+               mBulletRespawn[index] = GetRandomValue(60, 720) / 60.0f;
+               }
+         }
+         else{
+            b.update(deltaTime, mGameState.rabbit, mGameState.map, mGameState.rabbit, 1);
+            if (b.isCollidingPlayer()){
+               b.deactivate();
+               mGameState.cur_lives--;
+            }
+            if (b.getPosition().x < mGameState.camera.target.x - 500.0f){
+               b.deactivate();
+            }
          }
       }
       else{
-         b.update(deltaTime, mGameState.rabbit, mGameState.map, mGameState.rabbit, 1);
-         if (b.isCollidingEnemy()){
-            b.deactivate();
-         }
-         if (b.getPosition().x < -200.0f){
-            b.deactivate();
-         }
+         b.deactivate();
       }
-
-   }
+   } 
 
    panCamera(&mGameState.camera, &currentPlayerPosition);
 }
@@ -152,23 +184,33 @@ void LevelA::render()
    mGameState.map->render();
 
    for (int i = 0; i < NUM_BULLETS; i++){
-      if (mGameState.monkey[i].isActive()){
-         mGameState.monkey[i].render();
+      if (mGameState.bullet[i].isActive()){
+         mGameState.bullet[i].render();
       }
+   }
+   for (int i = 0; i < NUM_CANNON; i++){
+      mGameState.cannon[i].render();
    }
 }
 
 void LevelA::renderUI()
 {
     DrawText(TextFormat("Lives: %d", mGameState.cur_lives), 20, 20, 40, WHITE);
+
+   int minutes = (int)mTimer / 60;
+   int seconds = (int)mTimer % 60;
+
+   DrawText(TextFormat("%02d:%02d", minutes, seconds), 20, 70, 40, YELLOW);
 }
 
 void LevelA::shutdown()
 {
    delete mGameState.rabbit;
    delete mGameState.map;
-   delete[] mGameState.monkey;
+   delete[] mGameState.bullet;
+   delete[] mGameState.cannon;
+   delete[] mGameState.ammo;
 
-   UnloadMusicStream(mGameState.bgm);
    UnloadSound(mGameState.jumpSound);
+   UnloadMusicStream(mGameState.bgm);
 }

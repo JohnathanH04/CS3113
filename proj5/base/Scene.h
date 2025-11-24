@@ -7,7 +7,10 @@
 struct GameState
 {
     Entity *rabbit;
-    Entity *monkey;
+    Entity *bullet;
+    Entity *cannon;
+    Entity *enemy;
+    Entity *ammo;
     Map *map;
 
     Music bgm;
@@ -32,6 +35,12 @@ struct GameState
 
     //bullet logic
     std::queue<int> bulletQueue;
+
+    //enemy logic
+    std::queue<int> enemyQueue;
+
+    //ammo logic
+    std::queue<int> ammoQueue;
 };
 
 class Scene 

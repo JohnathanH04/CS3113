@@ -5,7 +5,7 @@
 
 enum Direction    { LEFT, UP, RIGHT, DOWN              }; // For walking
 enum EntityStatus { ACTIVE, INACTIVE                   };
-enum EntityType   { PLAYER, BLOCK, PLATFORM, NPC, BULLET, NONE };
+enum EntityType   { PLAYER, BLOCK, PLATFORM, NPC, BULLET, CANNON, AMMO, NONE };
 enum AIType       { WANDERER, FOLLOWER, JUMPER         };
 enum AIState      { WALKING, IDLE, FOLLOWING           };
 
@@ -42,7 +42,7 @@ private:
     bool mIsCollidingBottom = false;
     bool mIsCollidingRight  = false;
     bool mIsCollidingLeft   = false;
-    bool mCollidingEnemy    = false;
+    bool mCollidingPlayer    = false;
 
     int turnAround         = 0;
 
@@ -66,7 +66,7 @@ private:
         mIsCollidingBottom = false;
         mIsCollidingRight  = false;
         mIsCollidingLeft   = false;
-        mCollidingEnemy    = false;
+        mCollidingPlayer    = false;
     }
 
     void animate(float deltaTime);
@@ -102,8 +102,20 @@ public:
 
     bool isActive() { return mEntityStatus == ACTIVE ? true : false; }
 
-    void moveUp()    { mMovement.y = -1; mDirection = UP;    }
-    void moveDown()  { mMovement.y =  1; mDirection = DOWN;  }
+    void moveUp()    { 
+        mMovement.y = -1; 
+        if (mEntityType == NPC){
+            return;
+        } 
+        mDirection = UP;    
+    }
+    void moveDown()  { 
+        mMovement.y =  1;
+        if (mEntityType == NPC){
+            return;
+        } 
+        mDirection = DOWN;  
+    }
     void moveLeft()  { mMovement.x = -1; mDirection = LEFT;  }
     void moveRight() { mMovement.x =  1; mDirection = RIGHT; }
 
@@ -114,7 +126,7 @@ public:
     Vector2     getVelocity()              const { return mVelocity;              }
     Vector2     getAcceleration()          const { return mAcceleration;          }
     Vector2     getScale()                 const { return mScale;                 }
-    Vector2     getColliderDimensions()    const { return mScale;                 }
+    Vector2     getColliderDimensions()    const { return mColliderDimensions;                 }
     Vector2     getSpriteSheetDimensions() const { return mSpriteSheetDimensions; }
     Texture2D   getTexture()               const { return mTexture;               }
     TextureType getTextureType()           const { return mTextureType;           }
@@ -131,7 +143,7 @@ public:
     
     bool isCollidingTop()    const { return mIsCollidingTop;    }
     bool isCollidingBottom() const { return mIsCollidingBottom; }
-    bool isCollidingEnemy() const { return mCollidingEnemy; }
+    bool isCollidingPlayer() const { return mCollidingPlayer; }
 
     std::map<Direction, std::vector<int>> getAnimationAtlas() const { return mAnimationAtlas; }
 
