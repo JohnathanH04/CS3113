@@ -16,7 +16,7 @@ struct GameState
     Map *map;
 
     Music bgm;
-    Sound jumpSound;
+    Sound shootSound;
     Sound hitSound;
     Sound flagSound;
 

@@ -1,6 +1,6 @@
-#include "LevelA.h"
+#include "LevelC.h"
 
-class LevelB : public Scene {
+class LevelEnd : public Scene {
 private:
     unsigned int mLevelData[LEVEL_WIDTH * LEVEL_HEIGHT] = {
         21, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3,   21,
@@ -19,17 +19,10 @@ public:
     static constexpr float TILE_DIMENSION       = 75.0f,
                         ACCELERATION_OF_GRAVITY = 981.0f,
                         END_GAME_THRESHOLD      = 800.0f;
-    static constexpr int    NUM_BULLETS         = 70,
-                            NUM_CANNON          = 8,
-                            NUM_AMMO            = 4,
-                            NUM_ENEMIES         = 4;                  
-    float mBulletRespawn[NUM_BULLETS];
-    float mEnemyRespawn[NUM_ENEMIES];
-    float mTimer                                = 30.0f;
 
-    LevelB();
-    LevelB(Vector2 origin, const char *bgHexCode);
-    ~LevelB();
+    LevelEnd();
+    LevelEnd(Vector2 origin, const char *bgHexCode);
+    ~LevelEnd();
     
     void initialise() override;
     void update(float deltaTime) override;

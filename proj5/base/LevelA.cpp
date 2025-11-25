@@ -17,7 +17,7 @@ void LevelA::initialise()
    SetMusicVolume(mGameState.bgm, 0.33f);
    PlayMusicStream(mGameState.bgm);
 
-   mGameState.jumpSound = LoadSound("assets/Jump1.wav");
+   mGameState.shootSound = LoadSound("assets/Shoot29.wav");
    mGameState.hitSound = LoadSound("assets/Hit11.wav");
    mGameState.flagSound = LoadSound("assets/Pickup9.wav");
 
@@ -111,9 +111,9 @@ void LevelA::initialise()
    */
    mGameState.camera = { 0 };                                    // zero initialize
    mGameState.camera.target = mGameState.rabbit->getPosition(); // camera follows player
-   mGameState.camera.offset = mOrigin;                           // camera offset to center of screen
+   mGameState.camera.offset = {mOrigin.x + 100.0f, mOrigin.y} ;  // camera offset to center of screen
    mGameState.camera.rotation = 0.0f;                            // no rotation
-   mGameState.camera.zoom = 1.0f;                                // default zoom
+   mGameState.camera.zoom = 1.6f;                                // default zoom
 }
 
 void LevelA::update(float deltaTime)
@@ -150,7 +150,7 @@ void LevelA::update(float deltaTime)
             mBulletRespawn[index] -= deltaTime;
             if (mBulletRespawn[index] <= 0.0f){
                float _spawnX = 2000.0f;
-               float _spawnY = GetRandomValue(25, 525);
+               float _spawnY = GetRandomValue(25, 575);
                b.setPosition({ _spawnX, _spawnY});
                b.setMovement({ -0.75f, 0.0f });
                b.activate();
@@ -209,8 +209,8 @@ void LevelA::shutdown()
    delete mGameState.map;
    delete[] mGameState.bullet;
    delete[] mGameState.cannon;
-   delete[] mGameState.ammo;
 
-   UnloadSound(mGameState.jumpSound);
    UnloadMusicStream(mGameState.bgm);
+   UnloadSound(mGameState.shootSound);
+   UnloadSound(mGameState.hitSound);
 }

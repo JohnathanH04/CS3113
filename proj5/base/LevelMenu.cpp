@@ -29,7 +29,11 @@ void LevelMenu::render()
 {
    ClearBackground(ColorFromHex(mBGColourHexCode));
 
-   DrawText("Press ENTER to Start", mOrigin.x / 2.0f , mOrigin.y / 2.0f, 40, WHITE);
+   DrawText("A Rabbit's Bizarre Adventure", 500.0f, 280.0f, 50, WHITE);
+
+   DrawText("WASD - Move, Spacebar - Shoot", 500.0f , 400.0f, 40, WHITE);
+
+   DrawText("Press ENTER to Start", 500.0f , 550.0f, 40, WHITE);
 
 }
 

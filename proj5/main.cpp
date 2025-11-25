@@ -1,12 +1,12 @@
-#include "base/LevelC.h"
+#include "base/LevelEnd.h"
 
 // Global Constants
-constexpr int SCREEN_WIDTH     = 1000,
-              SCREEN_HEIGHT    = 600,
+constexpr int ORIGIN_WIDTH     = 1000,
+              ORIGIN_HEIGHT    = 600,
               FPS              = 120,
               NUMBER_OF_LEVELS = 4;
 
-constexpr Vector2 ORIGIN      = { SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2 };
+constexpr Vector2 ORIGIN      = { ORIGIN_WIDTH / 2, ORIGIN_HEIGHT / 2 };
 
 constexpr float FIXED_TIMESTEP = 1.0f / 60.0f;
 
@@ -22,9 +22,10 @@ LevelMenu *gLevelMenu = nullptr;
 LevelA *gLevelA = nullptr;
 LevelB *gLevelB = nullptr;
 LevelC *gLevelC = nullptr;
+LevelEnd *gLevelEnd = nullptr;
 
 //life tracker
-int lives_left = 2000;
+int lives_left = 6;
 bool winner;
 
 // Function Declarations
@@ -48,7 +49,7 @@ void switchToScene(Scene *scene, int lives)
 
 void initialise()
 {
-    InitWindow(SCREEN_WIDTH, SCREEN_HEIGHT, "Rise");
+    InitWindow(1920, 1080, "A Bunny's Bizarre Adventure");
     InitAudioDevice();
 
     //push back all created levels
@@ -56,13 +57,15 @@ void initialise()
     gLevelA = new LevelA(ORIGIN, "#C0897E");
     gLevelB = new LevelB(ORIGIN, "#011627");
     gLevelC = new LevelC(ORIGIN, "#0a1579ff");
+    gLevelEnd = new LevelEnd(ORIGIN, "#000000");
 
     gLevels.push_back(gLevelMenu);
     gLevels.push_back(gLevelA);
     gLevels.push_back(gLevelB);
     gLevels.push_back(gLevelC);
+    gLevels.push_back(gLevelEnd);
 
-    switchToScene(gLevels[0], 2000);
+    switchToScene(gLevels[0], 6);
 
     SetTargetFPS(FPS);
 }
@@ -72,11 +75,12 @@ void processInput()
     // check for start/end menu keys --> make sure scene cannot call other functions until it is a playable level
     if (gCurrentScene == gLevels[0] || gCurrentScene == gLevels[4]){
         if (gCurrentScene == gLevels[0] && IsKeyPressed(KEY_ENTER)){
-            switchToScene(gLevels[3], 2000);
+            switchToScene(gLevels[gCurrentScene->getState().nextSceneID], 6);
+            // switchToScene(gLevels[4],6);
         }
 
         if (gCurrentScene == gLevels[4] && IsKeyPressed(KEY_R)){
-            switchToScene(gLevels[gCurrentScene->getState().nextSceneID], 2000);
+            switchToScene(gLevels[gCurrentScene->getState().nextSceneID], 6);
         }
 
         if (IsKeyPressed(KEY_Q) || WindowShouldClose()) {
@@ -93,6 +97,7 @@ void processInput()
 
     if (IsKeyPressed(KEY_SPACE)){
         if (!gCurrentScene->getState().ammoQueue.empty()){
+            PlaySound(gCurrentScene->getState().shootSound);
             int index = gCurrentScene->getState().ammoQueue.front();
             Entity& ammo = gCurrentScene->getState().ammo[index];
             if (!ammo.isActive()){
@@ -198,15 +203,16 @@ int main(void)
             }
 
             if (gCurrentScene->getState().next_scene){
+                PlaySound(gCurrentScene->getState().flagSound);
                 int id = gCurrentScene->getState().nextSceneID;
                 //switch to next scene
                 switchToScene(gLevels[id], lives_left);
             }
         }
         else if (lives_left == 0){
-            lives_left = 2000;
+            lives_left = 6;
             winner = false;
-            switchToScene(gLevels[0], 2000);
+            switchToScene(gLevels[0], 6);
         }
         render();
     }

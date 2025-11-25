@@ -19,13 +19,17 @@ public:
     static constexpr float TILE_DIMENSION       = 75.0f,
                         ACCELERATION_OF_GRAVITY = 981.0f,
                         END_GAME_THRESHOLD      = 800.0f;
-    static constexpr int    NUM_BULLETS         = 25,
+    static constexpr int    NUM_BULLETS         = 80,
                             NUM_CANNON          = 8,
                             NUM_AMMO            = 3,
                             NUM_ENEMIES         = 2;                  
     float mBulletRespawn[NUM_BULLETS];
     float mEnemyRespawn[NUM_ENEMIES];
     float mTimer                                = 30.0f;
+    float bulletSpeed                           = -2.5f;
+    float shieldPulse                           = 0.0f;
+    float pulseSpeed                            = 100.0f;
+    float baseShield                            = 125.0f;
 
     LevelC();
     LevelC(Vector2 origin, const char *bgHexCode);

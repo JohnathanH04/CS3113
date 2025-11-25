@@ -17,7 +17,7 @@ void LevelC::initialise()
    SetMusicVolume(mGameState.bgm, 0.33f);
    PlayMusicStream(mGameState.bgm);
 
-   mGameState.jumpSound = LoadSound("assets/Jump1.wav");
+   mGameState.shootSound = LoadSound("assets/Shoot29.wav");
    mGameState.hitSound = LoadSound("assets/Hit11.wav");
    mGameState.flagSound = LoadSound("assets/Pickup9.wav");
 
@@ -165,7 +165,7 @@ void LevelC::initialise()
 
    mGameState.shield = new Entity (
       {mOrigin.x - 1500.0f, mOrigin.y - 200.0f}, // position
-      {125.0f, 125.0f},             // scale
+      {baseShield, baseShield},             // scale
       "assets/shield.png",            // texture file address 
       NPC                                   // entity type
    );
@@ -199,9 +199,9 @@ void LevelC::initialise()
    */
    mGameState.camera = { 0 };                                    // zero initialize
    mGameState.camera.target = mGameState.rabbit->getPosition(); // camera follows player
-   mGameState.camera.offset = mOrigin;                           // camera offset to center of screen
+   mGameState.camera.offset = {mOrigin.x + 100.0f, mOrigin.y} ;  // camera offset to center of screen
    mGameState.camera.rotation = 0.0f;                            // no rotation
-   mGameState.camera.zoom = 1.0f;                                // default zoom
+   mGameState.camera.zoom = 1.6f;                                // default zoom
 }
 
 void LevelC::update(float deltaTime)
@@ -223,15 +223,26 @@ void LevelC::update(float deltaTime)
    //SHIELD LOGIC
    mGameState.shield->update(deltaTime, nullptr, mGameState.map, mGameState.bullet, NUM_BULLETS);
 
+   // GROWING/SHRINKING SHIELD
+   shieldPulse += 1.0f;
+   float shieldOffset = baseShield + (60.0f * sin(shieldPulse/pulseSpeed));
+   mGameState.shield->setScale({shieldOffset, shieldOffset});
+   mGameState.shield->setColliderDimensions({
+      mGameState.shield->getScale().x,
+      mGameState.shield->getScale().y
+   });
+
    //BOSS LOGIC
    mGameState.boss->update(deltaTime, nullptr, mGameState.map, mGameState.ammo, NUM_AMMO);
    if (mGameState.boss_lives <= 0){
       mGameState.boss_death = true;
       mGameState.boss->deactivate();
+      bulletSpeed = -0.75f;
    }
 
    if (mGameState.boss->isCollidingPlayer()){
       printf("BOSS LOSING HP");
+      PlaySound(mGameState.hitSound);
       mGameState.boss_lives--;
    }
 
@@ -249,9 +260,9 @@ void LevelC::update(float deltaTime)
             mBulletRespawn[index] -= deltaTime;
             if (mBulletRespawn[index] <= 0.0f){
                float _spawnX = 2000.0f;
-               float _spawnY = GetRandomValue(50, 500);
+               float _spawnY = GetRandomValue(25, 575);
                b.setPosition({ _spawnX, _spawnY});
-               b.setMovement({ -0.75f, 0.0f });
+               b.setMovement({ bulletSpeed, 0.0f });
                b.activate();
                mBulletRespawn[index] = GetRandomValue(60, 720) / 60.0f;
                }
@@ -311,8 +322,8 @@ void LevelC::update(float deltaTime)
       Entity& ammo = mGameState.ammo[i];
       if (ammo.isActive()){
          ammo.update(deltaTime, nullptr, nullptr, mGameState.enemy, NUM_ENEMIES);
-         if (ammo.getPosition().x < mGameState.camera.target.x - 500.0f || 
-            ammo.getPosition().x > mGameState.camera.target.x + 500.0f ||
+         if (ammo.getPosition().x < mGameState.camera.target.x - 700.0f || 
+            ammo.getPosition().x > mGameState.camera.target.x + 700.0f ||
             ammo.getPosition().y < mGameState.camera.target.y - 500.0f || 
             ammo.getPosition().y > mGameState.camera.target.y + 500.0f){
             ammo.deactivate();
@@ -390,5 +401,6 @@ void LevelC::shutdown()
    delete[] mGameState.ammo;
 
    UnloadMusicStream(mGameState.bgm);
-   UnloadSound(mGameState.jumpSound);
+   UnloadSound(mGameState.shootSound);
+   UnloadSound(mGameState.hitSound);
 }
