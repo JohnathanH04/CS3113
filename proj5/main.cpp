@@ -1,3 +1,13 @@
+/**
+* Author: Johnathan Huang
+* Assignment: Student's Choice
+* Date due: 11/26/2025, 2:00pm
+* I pledge that I have completed this assignment without
+* collaborating with anyone else, in conformance with the
+* NYU School of Engineering Policies and Procedures on
+* Academic Misconduct.
+**/
+
 #include "base/LevelEnd.h"
 
 // Global Constants
@@ -49,7 +59,7 @@ void switchToScene(Scene *scene, int lives)
 
 void initialise()
 {
-    InitWindow(1920, 1080, "A Bunny's Bizarre Adventure");
+    InitWindow(1920, 1080, "A Bunny's Obstacle Course");
     InitAudioDevice();
 
     //push back all created levels

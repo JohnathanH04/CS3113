@@ -29,7 +29,7 @@ void LevelMenu::render()
 {
    ClearBackground(ColorFromHex(mBGColourHexCode));
 
-   DrawText("A Rabbit's Bizarre Adventure", 500.0f, 280.0f, 50, WHITE);
+   DrawText("A Bunny's Obstacle Course", 500.0f, 280.0f, 50, WHITE);
 
    DrawText("WASD - Move, Spacebar - Shoot", 500.0f , 400.0f, 40, WHITE);
 
