@@ -8,8 +8,8 @@ LevelC::~LevelC() { shutdown(); }
 void LevelC::initialise()
 {
    mTimer = 45.0f;
-   mGameState.curSceneID = 2;
-   mGameState.nextSceneID = 3;
+   mGameState.curSceneID = 3;
+   mGameState.nextSceneID = 4;
    mGameState.reset_scene = false;
    mGameState.next_scene = false;
 
@@ -160,6 +160,41 @@ void LevelC::initialise()
    }
 
    /*
+      ----------- SHIELD -----------
+   */
+
+   mGameState.shield = new Entity (
+      {mOrigin.x - 1500.0f, mOrigin.y - 200.0f}, // position
+      {125.0f, 125.0f},             // scale
+      "assets/shield.png",            // texture file address 
+      NPC                                   // entity type
+   );
+   mGameState.shield->setColliderDimensions({
+         mGameState.shield->getScale().x,
+         mGameState.shield->getScale().y
+      });
+   mGameState.shield->setAIType(SHIELD);
+   mGameState.shield->setSpeed(Entity::DEFAULT_SPEED *  0.40f);
+
+   /*
+      ----------- BOSS -----------
+   */
+
+   mGameState.boss = new Entity (
+      {mOrigin.x - 1100.0f, mOrigin.y - 100.0f}, // position
+      {125.0f, 125.0f},             // scale
+      "assets/spacecraft.png",            // texture file address 
+      NPC                                   // entity type
+   );
+   mGameState.boss->setColliderDimensions({
+         mGameState.boss->getScale().x,
+         mGameState.boss->getScale().y
+      });
+   mGameState.boss->setAIType(BOSS);
+   mGameState.boss->setSpeed(Entity::DEFAULT_SPEED *  0.50f);
+   mGameState.boss_lives = 10;
+
+   /*
       ----------- CAMERA -----------
    */
    mGameState.camera = { 0 };                                    // zero initialize
@@ -172,10 +207,9 @@ void LevelC::initialise()
 void LevelC::update(float deltaTime)
 {
    UpdateMusicStream(mGameState.bgm);
-   mTimer -= deltaTime;
 
-   if (mTimer <= 0.0f){
-      mGameState.reset_scene = true;
+   if (mGameState.boss_death){
+      mTimer -= deltaTime;
    }
 
    mGameState.rabbit->update(
@@ -185,6 +219,21 @@ void LevelC::update(float deltaTime)
       mGameState.bullet, // collidable entities
       NUM_BULLETS              // col. entity count
    );
+
+   //SHIELD LOGIC
+   mGameState.shield->update(deltaTime, nullptr, mGameState.map, mGameState.bullet, NUM_BULLETS);
+
+   //BOSS LOGIC
+   mGameState.boss->update(deltaTime, nullptr, mGameState.map, mGameState.ammo, NUM_AMMO);
+   if (mGameState.boss_lives <= 0){
+      mGameState.boss_death = true;
+      mGameState.boss->deactivate();
+   }
+
+   if (mGameState.boss->isCollidingPlayer()){
+      printf("BOSS LOSING HP");
+      mGameState.boss_lives--;
+   }
 
    Vector2 currentPlayerPosition = { mGameState.rabbit->getPosition().x, mGameState.rabbit->getPosition().y };
 
@@ -234,7 +283,7 @@ void LevelC::update(float deltaTime)
       if (!e.isActive()){
          mEnemyRespawn[index] -= deltaTime;
          if (mEnemyRespawn[index] <= 0.0f){
-            float _spawnX = (700 + (index * 200));
+            float _spawnX = (-200 + (100 * index));
             float _spawnY = GetRandomValue(50, 500);
             e.setPosition({_spawnX, _spawnY});
             mEnemyRespawn[index] = 20000.0f;
@@ -267,15 +316,16 @@ void LevelC::update(float deltaTime)
             ammo.getPosition().y < mGameState.camera.target.y - 500.0f || 
             ammo.getPosition().y > mGameState.camera.target.y + 500.0f){
             ammo.deactivate();
-            mGameState.ammoQueue.push(i);
          }
 
          if (ammo.isCollidingPlayer()){
             ammo.deactivate();
-            mGameState.ammoQueue.push(i);
          }
       }
 
+      if (!ammo.isActive()){
+         mGameState.ammoQueue.push(i);
+      }
    }  
 
    if (mGameState.rabbit->getPosition().x > 2300.0f){
@@ -291,6 +341,11 @@ void LevelC::render()
 
    mGameState.rabbit->render();
    mGameState.map->render();
+   mGameState.shield->render();
+
+   if (mGameState.boss->isActive()){
+      mGameState.boss->render();
+   }
 
    for (int i = 0; i < NUM_BULLETS; i++){
       if (mGameState.bullet[i].isActive()){
@@ -326,6 +381,9 @@ void LevelC::shutdown()
 {
    delete mGameState.rabbit;
    delete mGameState.map;
+   delete mGameState.shield;
+   delete mGameState.boss;
+
    delete[] mGameState.bullet;
    delete[] mGameState.cannon;
    delete[] mGameState.enemy;

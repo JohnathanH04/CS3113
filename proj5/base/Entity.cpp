@@ -53,6 +53,19 @@ void Entity::checkCollisionY(Entity *collidableEntities, int collisionCheckCount
                 mCollidingPlayer = true;
                 continue;
             }
+
+            if (mAIType == SHIELD){
+                printf("Shield works");
+                collidableEntity->deactivate();
+                continue;
+            }
+
+            if (mAIType == BOSS){
+                printf("Boss took damage");
+                mCollidingPlayer = true;
+                collidableEntity->deactivate();
+                continue;
+            }
             
             if (mVelocity.y > 0) 
             {
@@ -88,10 +101,23 @@ void Entity::checkCollisionX(Entity *collidableEntities, int collisionCheckCount
             // Skip if barely touching vertically (standing on platform)
             if (yOverlap < Y_COLLISION_THRESHOLD) continue;
 
-            if (mEntityType == AMMO && collidableEntity->mEntityType == NPC){
+            if (mEntityType == AMMO && collidableEntity->mEntityType == NPC ){
                 printf("collision");
                 mCollidingPlayer = true;
                 collidableEntity->deactivate();
+            }
+
+            if (mAIType == SHIELD){
+                printf("Shield works");
+                collidableEntity->deactivate();
+                continue;
+            }
+
+            if (mAIType == BOSS){
+                printf("Boss took damage");
+                mCollidingPlayer = true;
+                collidableEntity->deactivate();
+                continue;
             }
 
             if (collidableEntity->mEntityType == PLAYER){
@@ -122,7 +148,7 @@ void Entity::checkCollisionX(Entity *collidableEntities, int collisionCheckCount
 void Entity::checkCollisionY(Map *map)
 {
     if (map == nullptr) return;
-    if (mEntityType == NPC || mEntityType == BULLET) return;
+    if ((mEntityType == NPC && (mAIType != SHIELD && mAIType != BOSS))  || mEntityType == BULLET) return;
 
     Vector2 topCentreProbe    = { mPosition.x, mPosition.y - (mColliderDimensions.y / 2.0f) };
     Vector2 topLeftProbe      = { mPosition.x - (mColliderDimensions.x / 2.0f), mPosition.y - (mColliderDimensions.y / 2.0f) };
@@ -143,6 +169,7 @@ void Entity::checkCollisionY(Map *map)
         mPosition.y += yOverlap;   // push down
         mVelocity.y  = 0.0f;
         mIsCollidingTop = true;
+        turnAround = 1;
     }
 
     // COLLISION BELOW (falling downward)
@@ -153,6 +180,7 @@ void Entity::checkCollisionY(Map *map)
         mPosition.y -= yOverlap;   // push up
         mVelocity.y  = 0.0f;
         mIsCollidingBottom = true;
+        turnAround = -1;
     } 
 }
 
@@ -175,7 +203,7 @@ void Entity::checkCollisionX(Map *map)
         mPosition.x -= xOverlap * 1.01f;   // push left
         mVelocity.x  = 0.0f;
         mIsCollidingRight = true;
-        turnAround = 1;
+        // turnAround = 1;
     }
 
     // COLLISION ON LEFT (moving left)
@@ -185,7 +213,7 @@ void Entity::checkCollisionX(Map *map)
         mPosition.x += xOverlap * 1.01;   // push right
         mVelocity.x  = 0.0f;
         mIsCollidingLeft = true;
-        turnAround = -1;
+        // turnAround = -1;
     }
 }
 
@@ -223,10 +251,10 @@ void Entity::animate(float deltaTime)
 
 void Entity::AIWander() {
     if (turnAround >= 0){
-        moveLeft(); 
+        moveDown(); 
     }
     else{
-        moveRight();
+        moveUp();
     }
 }
 
@@ -273,6 +301,14 @@ void Entity::AIActivate(Entity *target)
 
     case JUMPER:
         AIJump();
+        break;
+
+    case SHIELD:
+        AIWander();
+        break;
+    
+    case BOSS:
+        AIWander();
         break;
     
     default:

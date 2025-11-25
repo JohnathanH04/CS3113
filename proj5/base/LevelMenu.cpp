@@ -29,7 +29,7 @@ void LevelMenu::render()
 {
    ClearBackground(ColorFromHex(mBGColourHexCode));
 
-   DrawText("Press ENTER to Start", mOrigin.x / 2, mOrigin.y / 2, 40, WHITE);
+   DrawText("Press ENTER to Start", mOrigin.x / 2.0f , mOrigin.y / 2.0f, 40, WHITE);
 
 }
 

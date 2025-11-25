@@ -6,7 +6,7 @@
 enum Direction    { LEFT, UP, RIGHT, DOWN              }; // For walking
 enum EntityStatus { ACTIVE, INACTIVE                   };
 enum EntityType   { PLAYER, BLOCK, PLATFORM, NPC, BULLET, CANNON, AMMO, NONE };
-enum AIType       { WANDERER, FOLLOWER, JUMPER         };
+enum AIType       { WANDERER, FOLLOWER, JUMPER, SHIELD, BOSS         };
 enum AIState      { WALKING, IDLE, FOLLOWING           };
 
 class Entity

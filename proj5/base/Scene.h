@@ -11,6 +11,8 @@ struct GameState
     Entity *cannon;
     Entity *enemy;
     Entity *ammo;
+    Entity* shield;
+    Entity* boss;
     Map *map;
 
     Music bgm;
@@ -30,8 +32,10 @@ struct GameState
     bool next_scene = false;
     //used on level C to set winner to true if player wins
     bool levelComplete = false;
-    // for end screen scenario
-    bool winner = false;
+
+    // for boss scenario
+    int boss_lives;
+    bool boss_death = false;
 
     //bullet logic
     std::queue<int> bulletQueue;
@@ -65,7 +69,7 @@ public:
     Vector2     getOrigin()          const { return mOrigin;    }
     const char* getBGColourHexCode() const { return mBGColourHexCode; }
     void        setLives(int value)        { mGameState.cur_lives = value; }
-    void        setWinner (bool value)     { mGameState.winner = value; }
+    void        setBossStatus (bool value)     { mGameState.boss_death = value; }
 };
 
 #endif

@@ -21,8 +21,8 @@ public:
                         END_GAME_THRESHOLD      = 800.0f;
     static constexpr int    NUM_BULLETS         = 25,
                             NUM_CANNON          = 8,
-                            NUM_AMMO            = 4,
-                            NUM_ENEMIES         = 4;                  
+                            NUM_AMMO            = 3,
+                            NUM_ENEMIES         = 2;                  
     float mBulletRespawn[NUM_BULLETS];
     float mEnemyRespawn[NUM_ENEMIES];
     float mTimer                                = 30.0f;

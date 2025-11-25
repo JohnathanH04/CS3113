@@ -42,12 +42,6 @@ void switchToScene(Scene *scene, int lives)
         gCurrentScene->shutdown();
 
     gCurrentScene = scene;
-    if (winner){
-        gCurrentScene->setWinner(true);
-    }
-    else{
-        gCurrentScene->setWinner(false);
-    }
     gCurrentScene->setLives(lives);
     gCurrentScene->initialise();
 }
@@ -78,7 +72,7 @@ void processInput()
     // check for start/end menu keys --> make sure scene cannot call other functions until it is a playable level
     if (gCurrentScene == gLevels[0] || gCurrentScene == gLevels[4]){
         if (gCurrentScene == gLevels[0] && IsKeyPressed(KEY_ENTER)){
-            switchToScene(gLevels[1], 2000);
+            switchToScene(gLevels[3], 2000);
         }
 
         if (gCurrentScene == gLevels[4] && IsKeyPressed(KEY_R)){
