@@ -48,7 +48,7 @@ void LevelA::initialise()
 
 
    mGameState.rabbit = new Entity(
-      {mOrigin.x - 2000.0f, mOrigin.y - 200.0f}, // position
+      {mOrigin.x - 1800.0f, mOrigin.y - 200.0f}, // position
       {250.0f * sizeRatio, 250.0f},             // scale
       "assets/char_spritesheet.png",            // texture file address
       ATLAS,                                    // single image or atlas?
@@ -133,7 +133,7 @@ void LevelA::update(float deltaTime)
       NUM_BULLETS              // col. entity count
    );
 
-   if (mGameState.rabbit->getPosition().x > 2200.0f){
+   if (mGameState.rabbit->getPosition().x > 2300.0f){
       mGameState.next_scene = true;
    }
 

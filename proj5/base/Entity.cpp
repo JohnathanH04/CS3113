@@ -90,7 +90,7 @@ void Entity::checkCollisionX(Entity *collidableEntities, int collisionCheckCount
 
             if (mEntityType == AMMO && collidableEntity->mEntityType == NPC){
                 printf("collision");
-                deactivate();
+                mCollidingPlayer = true;
                 collidableEntity->deactivate();
             }
 

@@ -7,8 +7,9 @@ LevelC::~LevelC() { shutdown(); }
 
 void LevelC::initialise()
 {
-   mGameState.curSceneID = 1;
-   mGameState.nextSceneID = 2;
+   mTimer = 45.0f;
+   mGameState.curSceneID = 2;
+   mGameState.nextSceneID = 3;
    mGameState.reset_scene = false;
    mGameState.next_scene = false;
 
@@ -47,7 +48,7 @@ void LevelC::initialise()
 
 
    mGameState.rabbit = new Entity(
-      {mOrigin.x - 920.0f, mOrigin.y - 200.0f}, // position
+      {mOrigin.x - 1800.0f, mOrigin.y - 200.0f}, // position
       {250.0f * sizeRatio, 250.0f},             // scale
       "assets/char_spritesheet.png",            // texture file address
       ATLAS,                                    // single image or atlas?
@@ -64,7 +65,6 @@ void LevelC::initialise()
    
    mGameState.rabbit->setAcceleration({0.0f, ACCELERATION_OF_GRAVITY});
 
-
    /*
       ----------- BULLETS -----------
    */
@@ -79,8 +79,6 @@ void LevelC::initialise()
          BULLET
       );
       mGameState.bullet[i].setTexture("assets/1.png");
-
-
       mGameState.bullet[i].deactivate();
       mGameState.bullet[i].setColliderDimensions({
          mGameState.bullet[i].getScale().x / 5.0f, 
@@ -88,6 +86,77 @@ void LevelC::initialise()
       });
       mGameState.bulletQueue.push(i);
       mBulletRespawn[i] = GetRandomValue(60,1080) / 60.0f;
+   }
+
+   /*
+      ----------- CANNONS -----------
+   */
+
+   mGameState.cannon = new Entity[NUM_CANNON];
+
+   for (int i = 0; i < NUM_CANNON; i++){
+      mGameState.cannon[i] = Entity(
+         {2000.0f, 50.0f + (75.0f * i)},
+         {75.0f, 75.0f},
+         "assets/cannon.png",
+         CANNON
+      );
+      mGameState.cannon[i].setTexture("assets/cannon.png");
+      mGameState.cannon[i].activate();
+   }
+
+   /*
+      ----------- ENEMIES -----------
+   */
+
+   std::map<Direction, std::vector<int>> enemyAnimationAtlas = {
+        {LEFT,  { 16, 17, 18, 19 }},
+        {RIGHT, { 48, 49, 50, 51 }},
+      //   {DOWN, { 0, 1, 2, 3 }},
+      //   {UP, { 32, 33, 34, 35 }},
+
+   };
+
+   mGameState.enemy = new Entity[NUM_ENEMIES];
+   
+   for (int i = 0; i < NUM_ENEMIES; i++){
+      mGameState.enemy[i] = Entity(
+         {0,0},
+         {100.0f, 100.0f},
+         "assets/monkey_enemy.png",
+         ATLAS,
+         { 8, 8 },
+         enemyAnimationAtlas,
+         NPC
+      );
+      mGameState.enemy[i].deactivate();
+      mGameState.enemy[i].setColliderDimensions({
+         mGameState.enemy[i].getScale().x / 4.0f,
+         mGameState.enemy[i].getScale().y / 2.0f
+      });
+      mGameState.enemy[i].setAIType(FOLLOWER);
+      mGameState.enemy[i].setAIState(IDLE);
+      mGameState.enemy[i].setSpeed(Entity::DEFAULT_SPEED *  0.65f);
+      mGameState.enemy[i].setTexture("assets/monkey_enemy.png");
+      mGameState.enemyQueue.push(i);
+      mEnemyRespawn[i] = 3.0f + (i * 4.0f);
+   }
+
+   /*
+      ----------- AMMO -----------
+   */
+   mGameState.ammo = new Entity[NUM_AMMO];
+
+   for (int i = 0; i < NUM_AMMO; i++){
+      mGameState.ammo[i] = Entity(
+         {0, 0},
+         {40, 40},
+         "assets/sprite_carotte0.png",
+         AMMO
+      );
+      mGameState.ammo[i].deactivate();
+      mGameState.ammo[i].setTexture("assets/sprite_carotte0.png");
+      mGameState.ammoQueue.push(i);
    }
 
    /*
@@ -103,6 +172,11 @@ void LevelC::initialise()
 void LevelC::update(float deltaTime)
 {
    UpdateMusicStream(mGameState.bgm);
+   mTimer -= deltaTime;
+
+   if (mTimer <= 0.0f){
+      mGameState.reset_scene = true;
+   }
 
    mGameState.rabbit->update(
       deltaTime,      // delta time / fixed timestep
@@ -114,33 +188,98 @@ void LevelC::update(float deltaTime)
 
    Vector2 currentPlayerPosition = { mGameState.rabbit->getPosition().x, mGameState.rabbit->getPosition().y };
 
+   //BULLET LOGIC
    for (int i = 0; i < NUM_BULLETS; i++){
       int index = mGameState.bulletQueue.front();
       mGameState.bulletQueue.pop();
       mGameState.bulletQueue.push(index);
 
       Entity& b = mGameState.bullet[index];
-
-      if (!b.isActive()){
-         mBulletRespawn[index] -= deltaTime;
-         if (mBulletRespawn[index] <= 0.0f){
-            float _spawnX = 1380.0f;
-            float _spawnY = GetRandomValue(50, 500);
-            b.setPosition({ _spawnX, _spawnY});
-            b.setMovement({ -0.75f, 0.0f });
-            b.activate();
-            mBulletRespawn[index] = GetRandomValue(60, 720) / 60.0f;
+      if (mGameState.rabbit->getPosition().x < 1850.0f){
+         if (!b.isActive()){
+            mBulletRespawn[index] -= deltaTime;
+            if (mBulletRespawn[index] <= 0.0f){
+               float _spawnX = 2000.0f;
+               float _spawnY = GetRandomValue(50, 500);
+               b.setPosition({ _spawnX, _spawnY});
+               b.setMovement({ -0.75f, 0.0f });
+               b.activate();
+               mBulletRespawn[index] = GetRandomValue(60, 720) / 60.0f;
+               }
+         }
+         else{
+            b.update(deltaTime, mGameState.rabbit, mGameState.map, mGameState.rabbit, 1);
+            if (b.isCollidingPlayer()){
+               b.deactivate();
+               mGameState.cur_lives--;
+            }
+            if (b.getPosition().x < mGameState.camera.target.x - 500.0f){
+               b.deactivate();
+            }
          }
       }
       else{
-         b.update(deltaTime, mGameState.rabbit, mGameState.map, mGameState.rabbit, 1);
-         if (b.isCollidingPlayer()){
-            b.deactivate();
-         }
-         if (b.getPosition().x < -200.0f){
-            b.deactivate();
+         b.deactivate();
+      }
+   }
+
+   //ENEMY LOGIC
+   for (int i  = 0; i < NUM_ENEMIES; i++){
+      int index = mGameState.enemyQueue.front();
+      mGameState.enemyQueue.pop();
+      mGameState.enemyQueue.push(index);
+
+      Entity& e = mGameState.enemy[index];
+
+      if (!e.isActive()){
+         mEnemyRespawn[index] -= deltaTime;
+         if (mEnemyRespawn[index] <= 0.0f){
+            float _spawnX = (700 + (index * 200));
+            float _spawnY = GetRandomValue(50, 500);
+            e.setPosition({_spawnX, _spawnY});
+            mEnemyRespawn[index] = 20000.0f;
+            e.activate();
          }
       }
+      else{
+         e.update(
+            deltaTime,
+            mGameState.rabbit,
+            mGameState.map,
+            mGameState.rabbit,
+            1
+         );
+
+         if(e.isCollidingPlayer()){
+            mGameState.cur_lives--;
+            mGameState.reset_scene = true;
+         }
+      }
+   }
+
+   //AMMO LOGIC
+   for (int i = 0; i < NUM_AMMO; i++){
+      Entity& ammo = mGameState.ammo[i];
+      if (ammo.isActive()){
+         ammo.update(deltaTime, nullptr, nullptr, mGameState.enemy, NUM_ENEMIES);
+         if (ammo.getPosition().x < mGameState.camera.target.x - 500.0f || 
+            ammo.getPosition().x > mGameState.camera.target.x + 500.0f ||
+            ammo.getPosition().y < mGameState.camera.target.y - 500.0f || 
+            ammo.getPosition().y > mGameState.camera.target.y + 500.0f){
+            ammo.deactivate();
+            mGameState.ammoQueue.push(i);
+         }
+
+         if (ammo.isCollidingPlayer()){
+            ammo.deactivate();
+            mGameState.ammoQueue.push(i);
+         }
+      }
+
+   }  
+
+   if (mGameState.rabbit->getPosition().x > 2300.0f){
+      mGameState.next_scene = true;
    }
 
    panCamera(&mGameState.camera, &currentPlayerPosition);
@@ -158,11 +297,29 @@ void LevelC::render()
          mGameState.bullet[i].render();
       }
    }
+   for (int i = 0; i < NUM_CANNON; i++){
+      mGameState.cannon[i].render();
+   }
+   for (int i = 0; i < NUM_ENEMIES; i++){
+      if (mGameState.enemy[i].isActive()){
+         mGameState.enemy[i].render();
+      }
+   }
+   for (int i = 0; i < NUM_AMMO; i++){
+      if (mGameState.ammo[i].isActive()){
+         mGameState.ammo[i].render();
+      }
+   }
 }
 
 void LevelC::renderUI()
 {
     DrawText(TextFormat("Lives: %d", mGameState.cur_lives), 20, 20, 40, WHITE);
+
+   int minutes = (int)mTimer / 60;
+   int seconds = (int)mTimer % 60;
+
+   DrawText(TextFormat("%02d:%02d", minutes, seconds), 20, 70, 40, YELLOW);
 }
 
 void LevelC::shutdown()
@@ -170,6 +327,9 @@ void LevelC::shutdown()
    delete mGameState.rabbit;
    delete mGameState.map;
    delete[] mGameState.bullet;
+   delete[] mGameState.cannon;
+   delete[] mGameState.enemy;
+   delete[] mGameState.ammo;
 
    UnloadMusicStream(mGameState.bgm);
    UnloadSound(mGameState.jumpSound);

@@ -78,7 +78,7 @@ void processInput()
     // check for start/end menu keys --> make sure scene cannot call other functions until it is a playable level
     if (gCurrentScene == gLevels[0] || gCurrentScene == gLevels[4]){
         if (gCurrentScene == gLevels[0] && IsKeyPressed(KEY_ENTER)){
-            switchToScene(gLevels[2], 2000);
+            switchToScene(gLevels[1], 2000);
         }
 
         if (gCurrentScene == gLevels[4] && IsKeyPressed(KEY_R)){
@@ -100,7 +100,6 @@ void processInput()
     if (IsKeyPressed(KEY_SPACE)){
         if (!gCurrentScene->getState().ammoQueue.empty()){
             int index = gCurrentScene->getState().ammoQueue.front();
-
             Entity& ammo = gCurrentScene->getState().ammo[index];
             if (!ammo.isActive()){
                 gCurrentScene->getState().ammoQueue.pop();           

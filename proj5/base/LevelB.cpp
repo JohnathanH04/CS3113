@@ -48,7 +48,7 @@ void LevelB::initialise()
 
 
    mGameState.rabbit = new Entity(
-      {mOrigin.x - 2000.0f, mOrigin.y - 200.0f}, // position
+      {mOrigin.x - 1800.0f, mOrigin.y - 200.0f}, // position
       {250.0f * sizeRatio, 250.0f},             // scale
       "assets/char_spritesheet.png",            // texture file address
       ATLAS,                                    // single image or atlas?
@@ -111,7 +111,7 @@ void LevelB::initialise()
 
    std::map<Direction, std::vector<int>> enemyAnimationAtlas = {
         {LEFT,  { 16, 17, 18, 19 }},
-        {RIGHT, { 48, 59, 50, 51 }},
+        {RIGHT, { 48, 49, 50, 51 }},
       //   {DOWN, { 0, 1, 2, 3 }},
       //   {UP, { 32, 33, 34, 35 }},
 
@@ -136,10 +136,10 @@ void LevelB::initialise()
       });
       mGameState.enemy[i].setAIType(FOLLOWER);
       mGameState.enemy[i].setAIState(IDLE);
-      mGameState.enemy[i].setSpeed(Entity::DEFAULT_SPEED *  0.70f);
+      mGameState.enemy[i].setSpeed(Entity::DEFAULT_SPEED *  0.65f);
       mGameState.enemy[i].setTexture("assets/monkey_enemy.png");
       mGameState.enemyQueue.push(i);
-      mEnemyRespawn[i] = 3.0f + (i * 2.0f);
+      mEnemyRespawn[i] = 3.0f + (i * 4.0f);
    }
 
    /*
@@ -236,6 +236,8 @@ void LevelB::update(float deltaTime)
          if (mEnemyRespawn[index] <= 0.0f){
             float _spawnX = (700 + (index * 200));
             float _spawnY = GetRandomValue(50, 500);
+            e.setPosition({_spawnX, _spawnY});
+            mEnemyRespawn[index] = 20000.0f;
             e.activate();
          }
       }
@@ -244,12 +246,18 @@ void LevelB::update(float deltaTime)
             deltaTime,
             mGameState.rabbit,
             mGameState.map,
-            nullptr,
-            0
+            mGameState.rabbit,
+            1
          );
+
+         if(e.isCollidingPlayer()){
+            mGameState.cur_lives--;
+            mGameState.reset_scene = true;
+         }
       }
    }
 
+   //AMMO LOGIC
    for (int i = 0; i < NUM_AMMO; i++){
       Entity& ammo = mGameState.ammo[i];
       if (ammo.isActive()){
@@ -261,9 +269,18 @@ void LevelB::update(float deltaTime)
             ammo.deactivate();
             mGameState.ammoQueue.push(i);
          }
+
+         if (ammo.isCollidingPlayer()){
+            ammo.deactivate();
+            mGameState.ammoQueue.push(i);
+         }
       }
+
    }  
 
+   if (mGameState.rabbit->getPosition().x > 2300.0f){
+      mGameState.next_scene = true;
+   }
 
    panCamera(&mGameState.camera, &currentPlayerPosition);
 }
@@ -312,6 +329,7 @@ void LevelB::shutdown()
    delete[] mGameState.bullet;
    delete[] mGameState.cannon;
    delete[] mGameState.enemy;
+   delete[] mGameState.ammo;
 
    UnloadMusicStream(mGameState.bgm);
    UnloadSound(mGameState.jumpSound);
